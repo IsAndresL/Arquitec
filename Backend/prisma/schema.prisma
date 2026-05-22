@@ -1,0 +1,299 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CAMPESINO
+  TECNICO_ADMIN
+}
+
+enum CropStatus {
+  SANO
+  HOJAS_AMARILLAS
+  MANCHAS_NEGRAS
+  HOJAS_SECAS
+  OTRA
+}
+
+enum ClimateType {
+  SOL
+  NUBLADO
+  LLUVIA
+  VIENTO
+}
+
+enum AlertType {
+  RIEGO
+  REVISAR_CULTIVO
+  OTRO
+}
+
+enum AlertFrequency {
+  DIARIA
+  CADA_N_DIAS
+  SEMANAL
+}
+
+enum SyncStatus {
+  PENDIENTE
+  SINCRONIZADO
+  CONFLICTO
+}
+
+enum RecommendationType {
+  AUTOMATICA
+  MANUAL
+}
+
+enum RecommendationPriority {
+  BAJA
+  MEDIA
+  ALTA
+}
+
+enum RecommendationStatus {
+  PENDIENTE
+  VISTA
+  SEGUIDA
+  IGNORADA
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  name          String
+  role          Role     @default(TECNICO_ADMIN)
+  isActive      Boolean  @default(true)
+  failedLogins  Int      @default(0)
+  lockedUntil   DateTime?
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  farmers       FarmerProfile[]
+  recommendations Recommendation[] @relation("TecnicoRecommendations")
+  activities    ActivityLog[]
+  reports       Report[]
+
+  @@map("users")
+}
+
+model FarmerProfile {
+  id              String    @id @default(uuid())
+  name            String
+  photoUrl        String?
+  municipality    String?
+  vereda          String?
+  pinHash         String
+  isActive        Boolean   @default(true)
+  isLocked        Boolean   @default(false)
+  lockedUntil     DateTime?
+  failedAttempts  Int       @default(0)
+  lastSyncAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  createdById     String
+  createdBy       User      @relation(fields: [createdById], references: [id])
+
+  parcels         FarmParcel[]
+  climateRecords  ClimateRecord[]
+  observations    CropObservation[]
+  inputs          InputRecord[]
+  alerts          Alert[]
+  recommendations Recommendation[]
+  syncRecords     SyncRecord[]
+  activities      ActivityLog[]
+
+  @@map("farmer_profiles")
+}
+
+model FarmParcel {
+  id          String    @id @default(uuid())
+  name        String?
+  area        Float
+  cropType    String
+  icon        String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  farmerId    String
+  farmer      FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  observations CropObservation[]
+  alerts      Alert[]
+  activities  ActivityLog[]
+
+  @@map("farm_parcels")
+}
+
+model ClimateRecord {
+  id        String      @id @default(uuid())
+  date      DateTime
+  type      ClimateType
+  syncStatus SyncStatus @default(PENDIENTE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  farmerId  String
+  farmer    FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("climate_records")
+}
+
+model CropObservation {
+  id          String     @id @default(uuid())
+  status      CropStatus
+  notes       String?
+  syncStatus  SyncStatus @default(PENDIENTE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  farmerId    String
+  farmer      FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  parcelId    String
+  parcel      FarmParcel    @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+
+  recommendations Recommendation[]
+
+  @@map("crop_observations")
+}
+
+model InputRecord {
+  id          String    @id @default(uuid())
+  name        String
+  quantity    Float
+  unit        String
+  date        DateTime
+  cost        Float?
+  syncStatus  SyncStatus @default(PENDIENTE)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  farmerId    String
+  farmer      FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("input_records")
+}
+
+model Alert {
+  id          String          @id @default(uuid())
+  type        AlertType
+  description String?
+  frequency   AlertFrequency
+  intervalDays Int?
+  hour        String
+  isActive    Boolean         @default(true)
+  parcelId    String?
+  nextTrigger DateTime?
+  syncStatus  SyncStatus      @default(PENDIENTE)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  farmerId    String
+  farmer      FarmerProfile   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  parcel      FarmParcel?     @relation(fields: [parcelId], references: [id], onDelete: SetNull)
+
+  @@map("alerts")
+}
+
+model Recommendation {
+  id          String                  @id @default(uuid())
+  type        RecommendationType
+  priority    RecommendationPriority  @default(MEDIA)
+  status      RecommendationStatus    @default(PENDIENTE)
+  title       String
+  description String
+  action      String?
+  cropStatus  CropStatus?
+  climateType ClimateType?
+  cropType    String?
+  followedAt  DateTime?
+  ignoredAt   DateTime?
+  syncStatus  SyncStatus              @default(PENDIENTE)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  farmerId    String
+  farmer      FarmerProfile     @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  observationId String?
+  observation   CropObservation? @relation(fields: [observationId], references: [id], onDelete: SetNull)
+  technicianId  String?
+  technician    User?            @relation("TecnicoRecommendations", fields: [technicianId], references: [id], onDelete: SetNull)
+
+  @@map("recommendations")
+}
+
+model ActivityLog {
+  id          String    @id @default(uuid())
+  type        String
+  description String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  farmerId    String?
+  farmer      FarmerProfile? @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+  parcelId    String?
+  parcel      FarmParcel?    @relation(fields: [parcelId], references: [id], onDelete: SetNull)
+  userId      String?
+  user        User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("activity_logs")
+}
+
+model SyncRecord {
+  id          String     @id @default(uuid())
+  entityType  String
+  entityId    String
+  status      SyncStatus @default(PENDIENTE)
+  conflictData Json?
+  syncedAt    DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  farmerId    String
+  farmer      FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("sync_records")
+}
+
+model Report {
+  id          String    @id @default(uuid())
+  type        String
+  periodStart DateTime
+  periodEnd   DateTime
+  content     String
+  format      String    @default("text")
+  sharedWith  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  technicianId String
+  technician   User     @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+model AgronomicRule {
+  id          String   @id @default(uuid())
+  cropType    String
+  cropStatus  CropStatus
+  climateType ClimateType?
+  action      String
+  priority    RecommendationPriority @default(MEDIA)
+  isActive    Boolean  @default(true)
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("agronomic_rules")
+}

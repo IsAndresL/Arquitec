@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-05-03T00:00:00.000Z",
+  "description": "Reglas agronómicas para generación automática de recomendaciones. Edite este archivo para modificar las reglas sin necesidad de cambiar la base de datos.",
+  "rules": [
+    {
+      "id": "rule-001",
+      "cropType": "Yuca",
+      "cropStatus": "HOJAS_AMARILLAS",
+      "climateType": "SOL",
+      "action": "Revisar humedad del suelo y considerar riego en los próximos 2 días",
+      "priority": "ALTA",
+      "isActive": true
+    },
+    {
+      "id": "rule-002",
+      "cropType": "Plátano",
+      "cropStatus": "MANCHAS_NEGRAS",
+      "climateType": "LLUVIA",
+      "action": "Aplicar fungicida preventivo y mejorar drenaje",
+      "priority": "ALTA",
+      "isActive": true
+    },
+    {
+      "id": "rule-003",
+      "cropType": "Yuca",
+      "cropStatus": "SANO",
+      "climateType": null,
+      "action": "Continuar con el manejo actual. Monitorear regularmente.",
+      "priority": "BAJA",
+      "isActive": true
+    },
+    {
+      "id": "rule-004",
+      "cropType": "Maíz",
+      "cropStatus": "HOJAS_SECAS",
+      "climateType": "SOL",
+      "action": "Aumentar frecuencia de riego y verificar niveles de potasio",
+      "priority": "ALTA",
+      "isActive": true
+    },
+    {
+      "id": "rule-005",
+      "cropType": "Café",
+      "cropStatus": "MANCHAS_NEGRAS",
+      "climateType": null,
+      "action": "Revisar signos de roya y aplicar tratamiento si es necesario",
+      "priority": "MEDIA",
+      "isActive": true
+    },
+    {
+      "id": "rule-006",
+      "cropType": "Plátano",
+      "cropStatus": "HOJAS_AMARILLAS",
+      "climateType": "NUBLADO",
+      "action": "Verificar drenaje y aplicar micronutrientes (hierro y zinc)",
+      "priority": "MEDIA",
+      "isActive": true
+    }
+  ]
+}

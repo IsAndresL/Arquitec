@@ -1,0 +1,812 @@
+' ================================================================
+' MAGDALENA SMART FARMING — DIAGRAMAS DE CASOS DE USO
+' Versión 4 — Roles corregidos + Autenticación PIN + Admin unificado
+' ================================================================
+' Decisiones de diseño aplicadas:
+'   - Técnico y Administrador son el MISMO rol (Técnico/Admin)
+'   - El Técnico/Admin crea los perfiles de campesinos (flujo principal)
+'   - Campesino NO crea su propio perfil
+'   - Login Campesino: selección visual de perfil + PIN 4 dígitos
+'   - Login Técnico/Admin: usuario + contraseña estándar
+'   - Registro de Contabilidad/Costos: ELIMINADO
+' ================================================================
+
+
+' ================================================================
+' 0. DIAGRAMA GENERAL — VERSIÓN FINAL CORREGIDA
+' ================================================================
+@startuml DCU_0_General_v4
+title Magdalena Smart Farming\nDiagrama General de Casos de Uso — v4 Final
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #EAF4E8
+  BorderColor #2E7D32
+  FontSize 11
+}
+skinparam note {
+  BackgroundColor #FFFDE7
+  BorderColor #F9A825
+  FontSize 10
+}
+
+actor "Campesino" as C
+actor "Técnico /\nAdministrador" as T
+actor "Sistema\n(Motor de Reglas)" as S
+
+rectangle "Sistema Magdalena Smart Farming" {
+
+  package "Autenticación" {
+    usecase "Acceder con\nPIN (campesino)" as AU1
+    usecase "Acceder con usuario\ny contraseña (técnico)" as AU2
+  }
+
+  package "Módulo Campesino" {
+    usecase "Gestionar Parcelas\ny Cultivos" as UC_C1
+    usecase "Registrar Clima\ndel Día" as UC_C2
+    usecase "Registrar Observaciones\ndel Cultivo" as UC_C3
+    usecase "Gestionar Insumos\nUsados" as UC_C4
+    usecase "Programar Alertas\nde Calendario" as UC_C5
+    usecase "Ver Dashboard\nPrincipal" as UC_C6
+  }
+
+  package "Módulo Técnico / Admin" {
+    usecase "Crear y Gestionar\nPerfil de Campesino" as UC_T1
+    usecase "Asignar PIN\nal Campesino" as UC_T2
+    usecase "Emitir Recomendaciones\nal Productor" as UC_T3
+    usecase "Ver Lista de\nActividades" as UC_T4
+    usecase "Generar Reporte\nde Exportación" as UC_T5
+    usecase "Ver Resumen\npara Asesoría" as UC_T6
+  }
+
+  package "Funciones Transversales" {
+    usecase "Sincronización\nde Datos" as UC_X1
+    usecase "Operar en\nModo Offline" as UC_X2
+    usecase "Generar Recomendación\nAutomática" as UC_X3
+    usecase "Recibir Notificación\nde Alerta" as UC_X4
+  }
+}
+
+' Autenticación
+C --> AU1
+T --> AU2
+AU1 ..> UC_C6 : <<include>>
+AU2 ..> UC_T1 : <<include>>
+
+' Campesino
+C --> UC_C1
+C --> UC_C2
+C --> UC_C3
+C --> UC_C4
+C --> UC_C5
+C --> UC_C6
+
+' Técnico/Admin
+T --> UC_T1
+T --> UC_T3
+T --> UC_T4
+T --> UC_T5
+T --> UC_T6
+
+' Sistema
+S --> UC_X3
+S --> UC_X4
+
+' Relaciones funcionales
+UC_T1 ..> UC_T2 : <<include>>
+UC_C3 ..> UC_X3 : <<extend>>
+UC_C2 ..> UC_X3 : <<extend>>
+UC_X3 ..> UC_T3 : <<include>>
+UC_C5 ..> UC_X4 : <<include>>
+UC_X1 ..> UC_C3 : <<include>>
+UC_X1 ..> UC_C4 : <<include>>
+
+note right of AU1
+  Selección visual de perfil
+  + PIN de 4 dígitos.
+  Sin escritura requerida. (RF-10)
+end note
+
+note right of AU2
+  Usuario + contraseña.
+  Sesión persistente en
+  dispositivo del técnico.
+end note
+
+note right of UC_T2
+  PIN generado por el sistema.
+  El técnico lo comunica
+  verbalmente al campesino.
+end note
+
+note bottom of UC_X2
+  Offline-first ≥ 30 días.
+  Sync automática. (RF-02, RF-03)
+end note
+
+note bottom of UC_X3
+  "La decisión final la toma
+  el agricultor." (RNF-09)
+end note
+
+@enduml
+
+
+' ================================================================
+' 1. AUTENTICACIÓN — CAMPESINO (PIN)
+' ================================================================
+@startuml DCU_1_Auth_Campesino
+title Módulo de Autenticación — Campesino\nFlujo: Selección de perfil + PIN 4 dígitos (RF-10, RNF-01)
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase { BackgroundColor #E8F5E9; BorderColor #2E7D32 }
+
+actor "Campesino" as C
+actor "Sistema" as S
+
+rectangle "Autenticación del Campesino" {
+
+  package "Pantalla de Selección de Perfil" {
+    usecase "Ver lista de perfiles\nregistrados en el dispositivo" as AC1
+    usecase "Ver avatar / foto\nde cada perfil" as AC2
+    usecase "Ver nombre del\nproductor por perfil" as AC3
+    usecase "Seleccionar perfil\npropio" as AC4
+  }
+
+  package "Pantalla de Ingreso de PIN" {
+    usecase "Ver teclado numérico\ngrande en pantalla" as AC5
+    usecase "Ingresar PIN\nde 4 dígitos" as AC6
+    usecase "Ver confirmación\nvisual por dígito (●●●●)" as AC7
+    usecase "Confirmar acceso" as AC8
+    usecase "Ver mensaje de\nPIN incorrecto" as AC9
+    usecase "Volver a\nselección de perfil" as AC10
+  }
+
+  package "Procesamiento del Sistema" {
+    usecase "Validar PIN\ncontra perfil local" as AC11
+    usecase "Cargar datos del\ncampesino seleccionado" as AC12
+    usecase "Redirigir al\nDashboard" as AC13
+    usecase "Registrar intento\nfallido" as AC14
+  }
+}
+
+C --> AC1
+C --> AC4
+C --> AC6
+C --> AC8
+C --> AC10
+S --> AC11
+S --> AC12
+S --> AC13
+S --> AC14
+
+AC1 ..> AC2 : <<include>>
+AC1 ..> AC3 : <<include>>
+AC4 ..> AC5 : <<include>>
+AC6 ..> AC7 : <<include>>
+AC8 ..> AC11 : <<include>>
+AC11 ..> AC12 : <<extend>>
+AC12 ..> AC13 : <<include>>
+AC11 ..> AC9 : <<extend>>
+AC9 ..> AC14 : <<include>>
+
+note right of AC2
+  Foto o ícono asignado
+  al crear el perfil.
+  Sin texto obligatorio. (RNF-01)
+end note
+
+note right of AC5
+  Teclado numérico grande,
+  accesible para baja
+  destreza digital. (RNF-01)
+end note
+
+note bottom of AC11
+  Validación local (offline).
+  No requiere internet. (RF-02)
+end note
+
+note bottom of AC9
+  Máximo 3 intentos fallidos
+  antes de bloqueo temporal.
+end note
+
+@enduml
+
+
+' ================================================================
+' 2. AUTENTICACIÓN — TÉCNICO / ADMINISTRADOR
+' ================================================================
+@startuml DCU_2_Auth_Tecnico
+title Módulo de Autenticación — Técnico / Administrador\nFlujo: Usuario + contraseña estándar
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase { BackgroundColor #E8EAF6; BorderColor #283593 }
+
+actor "Técnico /\nAdministrador" as T
+actor "Sistema" as S
+
+rectangle "Autenticación del Técnico/Admin" {
+
+  package "Pantalla de Login" {
+    usecase "Ingresar nombre\nde usuario" as AT1
+    usecase "Ingresar contraseña" as AT2
+    usecase "Confirmar acceso\nal panel" as AT3
+    usecase "Ver mensaje de\ncredenciales incorrectas" as AT4
+  }
+
+  package "Procesamiento" {
+    usecase "Validar credenciales" as AT5
+    usecase "Mantener sesión\nactiva en dispositivo" as AT6
+    usecase "Redirigir al\nPanel Técnico/Admin" as AT7
+    usecase "Registrar intento\nfallido" as AT8
+  }
+}
+
+T --> AT1
+T --> AT2
+T --> AT3
+S --> AT5
+S --> AT6
+S --> AT7
+S --> AT8
+
+AT3 ..> AT5 : <<include>>
+AT5 ..> AT7 : <<extend>>
+AT5 ..> AT4 : <<extend>>
+AT4 ..> AT8 : <<include>>
+AT7 ..> AT6 : <<include>>
+
+note right of AT6
+  Sesión persistente.
+  El técnico no reingresa
+  credenciales en cada uso.
+end note
+
+note bottom of AT5
+  Puede requerir conexión
+  en primer login.
+  Sesión cacheada localmente.
+end note
+
+@enduml
+
+
+' ================================================================
+' 3. GESTIÓN DE PERFILES DE CAMPESINO (por Técnico/Admin)
+' ================================================================
+@startuml DCU_3_GestionPerfiles
+title Módulo Técnico/Admin — Gestión de Perfiles de Campesino\n(RF-10: Multiusuario — Flujo principal de registro)
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase { BackgroundColor #E0F2F1; BorderColor #00695C }
+
+actor "Técnico /\nAdministrador" as T
+actor "Sistema" as S
+
+rectangle "Gestión de Perfiles de Campesino" {
+
+  package "Lista de Productores" {
+    usecase "Ver lista de\ncampesinos registrados" as GP1
+    usecase "Ver estado de\ncada perfil (activo/inactivo)" as GP2
+    usecase "Buscar productor\npor nombre" as GP3
+    usecase "Iniciar creación\nde nuevo perfil" as GP4
+  }
+
+  package "Creación de Perfil" {
+    usecase "Ingresar nombre\ndel campesino" as GP5
+    usecase "Ingresar municipio\ny vereda (opcional)" as GP6
+    usecase "Asignar foto o\nícono de perfil" as GP7
+    usecase "Confirmar y\nguardar perfil" as GP8
+    usecase "Cancelar creación" as GP9
+  }
+
+  package "Asignación de PIN" {
+    usecase "Generar PIN\nautomático de 4 dígitos" as GP10
+    usecase "Mostrar PIN\ngenerado al técnico" as GP11
+    usecase "Regenerar PIN\n(si el campesino lo olvidó)" as GP12
+  }
+
+  package "Edición y Control" {
+    usecase "Editar datos de\nperfil existente" as GP13
+    usecase "Desactivar perfil\nde campesino" as GP14
+    usecase "Reasignar parcelas\na perfil" as GP15
+  }
+}
+
+T --> GP1
+T --> GP3
+T --> GP4
+T --> GP5
+T --> GP7
+T --> GP8
+T --> GP9
+T --> GP12
+T --> GP13
+T --> GP14
+T --> GP15
+S --> GP10
+S --> GP11
+
+GP1 ..> GP2 : <<include>>
+GP4 ..> GP5 : <<include>>
+GP4 ..> GP7 : <<include>>
+GP8 ..> GP10 : <<include>>
+GP10 ..> GP11 : <<include>>
+GP5 ..> GP6 : <<extend>>
+GP13 ..> GP15 : <<extend>>
+GP12 ..> GP10 : <<include>>
+GP12 ..> GP11 : <<include>>
+
+note right of GP7
+  El ícono/foto permite al campesino
+  identificar su perfil visualmente
+  sin leer su nombre. (RNF-01)
+end note
+
+note right of GP10
+  PIN generado por el sistema,
+  no lo elige el técnico.
+  El técnico lo comunica
+  verbalmente al campesino.
+end note
+
+note bottom of GP12
+  Caso de uso: campesino
+  olvidó su PIN. El técnico
+  regenera desde el panel.
+end note
+
+note bottom of GP11
+  El PIN solo se muestra
+  una vez. Comunicación
+  verbal o escrita al campesino.
+end note
+
+@enduml
+
+
+' ================================================================
+' 4. MÓDULO CAMPESINO — PARCELAS Y CULTIVOS
+' ================================================================
+@startuml DCU_4_Parcelas
+title Módulo Campesino — Parcelas y Cultivos\n(RF-01)
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase { BackgroundColor #E3F2FD; BorderColor #1565C0 }
+
+actor "Campesino" as C
+actor "Sistema" as S
+
+rectangle "Parcelas y Cultivos" {
+
+  package "Lista de Parcelas" {
+    usecase "Ver parcelas\nregistradas" as P1
+    usecase "Ver estado vacío\n(sin parcelas aún)" as P2
+    usecase "Iniciar registro\nde nueva parcela" as P3
+    usecase "Seleccionar parcela\npara ver detalle" as P4
+  }
+
+  package "Registro de Nueva Parcela" {
+    usecase "Ingresar nombre\n(opcional)" as P5
+    usecase "Ingresar área\nen hectáreas" as P6
+    usecase "Seleccionar cultivo\npor ícono\n(Yuca/Plátano/Guineo/Otra)" as P7
+    usecase "Usar entrada\nde voz" as P8
+    usecase "Guardar parcela" as P9
+    usecase "Cancelar" as P10
+  }
+
+  package "Sistema" {
+    usecase "Validar campos\nobligatorios" as P11
+    usecase "Guardar offline" as P12
+  }
+}
+
+C --> P1
+C --> P3
+C --> P4
+C --> P5
+C --> P6
+C --> P7
+C --> P8
+C --> P9
+C --> P10
+S --> P11
+S --> P12
+
+P1 ..> P2 : <<extend>>
+P3 ..> P5 : <<include>>
+P3 ..> P6 : <<include>>
+P3 ..> P7 : <<include>>
+P8 ..> P5 : <<extend>>
+P9 ..> P11 : <<include>>
+P9 ..> P12 : <<include>>
+
+note right of P7
+  Solo íconos. Sin texto
+  obligatorio. (RNF-01, RF-06)
+end note
+
+note bottom of P12
+  Sin conexión requerida. (RF-02)
+end note
+
+@enduml
+
+
+' ================================================================
+' 5. MÓDULO CAMPESINO — OBSERVACIONES + CLIMA
+' ================================================================
+@startuml DCU_5_Observaciones_Clima
+title Módulo Campesino — Observaciones del Cultivo y Clima del Día\n(RF-02, RF-05, RF-06)
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase { BackgroundColor #F3E5F5; BorderColor #6A1B9A }
+
+actor "Campesino" as C
+actor "Sistema\n(Motor de Reglas)" as S
+
+rectangle "Observaciones y Clima" {
+
+  package "Observaciones — Paso 1" {
+    usecase "Seleccionar parcela\na observar" as OC1
+    usecase "Ver ícono del\ncultivo por parcela" as OC2
+    usecase "Avanzar al\npaso 2" as OC3
+  }
+
+  package "Observaciones — Paso 2" {
+    usecase "Seleccionar estado\ndel cultivo por ícono\n(Sano / Hojas amarillas /\nManchas negras /\nHojas secas / Otra)" as OC4
+    usecase "Guardar observación" as OC5
+    usecase "Volver al paso 1" as OC6
+  }
+
+  package "Clima del Día" {
+    usecase "Seleccionar fecha\n(preseleccionada: hoy)" as OC7
+    usecase "Seleccionar clima\npor ícono\n(Sol/Nublado/Lluvia/Viento)" as OC8
+    usecase "Guardar registro\nclimático" as OC9
+  }
+
+  package "Procesamiento Automático" {
+    usecase "Asociar a parcela\ny fecha" as OC10
+    usecase "Guardar offline" as OC11
+    usecase "Evaluar estado +\nclima" as OC12
+    usecase "Generar recomendación\nautomática si aplica" as OC13
+  }
+}
+
+C --> OC1
+C --> OC3
+C --> OC4
+C --> OC5
+C --> OC6
+C --> OC7
+C --> OC8
+C --> OC9
+S --> OC10
+S --> OC11
+S --> OC12
+S --> OC13
+
+OC1 ..> OC2 : <<include>>
+OC3 ..> OC4 : <<include>>
+OC5 ..> OC10 : <<include>>
+OC5 ..> OC11 : <<include>>
+OC9 ..> OC10 : <<include>>
+OC9 ..> OC11 : <<include>>
+OC5 ..> OC12 : <<include>>
+OC9 ..> OC12 : <<include>>
+OC12 ..> OC13 : <<extend>>
+
+note right of OC4
+  Si estado != Sano,
+  el sistema puede extender
+  hacia recomendación. (RF-05)
+end note
+
+note bottom of OC13
+  "La decisión final la toma
+  el agricultor." (RNF-09)
+end note
+
+@enduml
+
+
+' ================================================================
+' 6. MÓDULO CAMPESINO — INSUMOS
+' ================================================================
+@startuml DCU_6_Insumos
+title Módulo Campesino — Insumos\n(RF-08)
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase { BackgroundColor #FFF8E1; BorderColor #E65100 }
+
+actor "Campesino" as C
+actor "Sistema" as S
+
+rectangle "Insumos" {
+
+  package "Vista Principal" {
+    usecase "Ver total acumulado\ngastado" as IN1
+    usecase "Ver lista de\ninsumos registrados" as IN2
+    usecase "Ver detalle:\nnombre, cantidad, fecha, costo" as IN3
+    usecase "Iniciar nuevo\nregistro de insumo" as IN4
+    usecase "Eliminar insumo" as IN5
+  }
+
+  package "Registro de Insumo" {
+    usecase "Ingresar nombre\ndel insumo" as IN6
+    usecase "Ingresar cantidad\ny unidad" as IN7
+    usecase "Ingresar fecha\nde aplicación" as IN8
+    usecase "Ingresar costo\n(opcional)" as IN9
+    usecase "Guardar insumo" as IN10
+  }
+
+  package "Sistema" {
+    usecase "Calcular y actualizar\ntotal automáticamente" as IN11
+    usecase "Guardar offline" as IN12
+  }
+}
+
+C --> IN1
+C --> IN2
+C --> IN4
+C --> IN5
+C --> IN6
+C --> IN7
+C --> IN8
+C --> IN9
+C --> IN10
+S --> IN11
+S --> IN12
+
+IN2 ..> IN3 : <<include>>
+IN4 ..> IN6 : <<include>>
+IN4 ..> IN7 : <<include>>
+IN4 ..> IN8 : <<include>>
+IN9 ..> IN10 : <<extend>>
+IN10 ..> IN11 : <<include>>
+IN10 ..> IN12 : <<include>>
+IN5 ..> IN11 : <<include>>
+
+note right of IN9
+  Costo es opcional.
+  Registro de insumos
+  agrícolas, NO contabilidad.
+  (RF-08)
+end note
+
+@enduml
+
+
+' ================================================================
+' 7. MÓDULO CAMPESINO — ALERTAS
+' ================================================================
+@startuml DCU_7_Alertas
+title Módulo Campesino — Alertas y Calendario\n(RF-04)
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase { BackgroundColor #FFEBEE; BorderColor #B71C1C }
+
+actor "Campesino" as C
+actor "Sistema\n(Scheduler)" as S
+
+rectangle "Alertas y Calendario" {
+
+  package "Lista de Alertas" {
+    usecase "Ver alertas\nprogramadas" as AL1
+    usecase "Ver estado\nactivo/inactivo" as AL2
+    usecase "Activar alerta" as AL3
+    usecase "Desactivar alerta" as AL4
+    usecase "Editar alerta" as AL5
+    usecase "Eliminar alerta" as AL6
+    usecase "Crear nueva alerta" as AL7
+  }
+
+  package "Creación de Alerta" {
+    usecase "Seleccionar tipo\n(Riego/Revisar cultivo/Otro)" as AL8
+    usecase "Seleccionar parcela\nasociada" as AL9
+    usecase "Configurar frecuencia\n(diaria/cada N días/semanal)" as AL10
+    usecase "Configurar hora" as AL11
+    usecase "Guardar alerta" as AL12
+  }
+
+  package "Sistema" {
+    usecase "Disparar alerta\nen hora programada" as AL13
+    usecase "Mostrar notificación\nvisual" as AL14
+    usecase "Emitir sonido" as AL15
+  }
+}
+
+C --> AL1
+C --> AL3
+C --> AL4
+C --> AL5
+C --> AL6
+C --> AL7
+S --> AL13
+
+AL1 ..> AL2 : <<include>>
+AL7 ..> AL8 : <<include>>
+AL7 ..> AL9 : <<include>>
+AL7 ..> AL10 : <<include>>
+AL7 ..> AL11 : <<include>>
+AL12 ..> AL13 : <<include>>
+AL13 ..> AL14 : <<include>>
+AL13 ..> AL15 : <<extend>>
+AL5 ..> AL10 : <<extend>>
+AL5 ..> AL11 : <<extend>>
+
+@enduml
+
+
+' ================================================================
+' 8. MÓDULO TÉCNICO/ADMIN — PANEL Y RECOMENDACIONES
+' ================================================================
+@startuml DCU_8_Panel_Recomendaciones
+title Módulo Técnico/Admin — Panel General y Recomendaciones\n(RF-05, RF-07, RNF-09)
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase { BackgroundColor #E8EAF6; BorderColor #283593 }
+
+actor "Técnico /\nAdministrador" as T
+actor "Campesino" as C
+actor "Sistema\n(Motor de Reglas)" as S
+
+rectangle "Panel Técnico/Admin — Recomendaciones" {
+
+  package "Resumen del Panel" {
+    usecase "Ver total de\nproductores registrados" as PR1
+    usecase "Ver alertas\nactivas del sistema" as PR2
+    usecase "Ver porcentaje\nde sincronización" as PR3
+    usecase "Cerrar sesión" as PR4
+  }
+
+  package "Recomendación Manual" {
+    usecase "Seleccionar productor" as PR5
+    usecase "Consultar datos del\nproductor (obs., clima,\nparcelas)" as PR6
+    usecase "Redactar y seleccionar\ntipo de recomendación" as PR7
+    usecase "Enviar recomendación\nal productor" as PR8
+  }
+
+  package "Recomendación Automática" {
+    usecase "Evaluar estado\ncultivo + clima" as PR9
+    usecase "Aplicar reglas\nagronómicas predefinidas" as PR10
+    usecase "Mostrar sugerencia\nen dashboard del campesino" as PR11
+  }
+
+  package "Seguimiento" {
+    usecase "Ver historial de\nrecomendaciones emitidas" as PR12
+    usecase "Ver si campesino\nsiguió la recomendación" as PR13
+  }
+}
+
+T --> PR1
+T --> PR2
+T --> PR3
+T --> PR4
+T --> PR5
+T --> PR7
+T --> PR12
+T --> PR13
+C --> PR11
+S --> PR9
+
+PR5 ..> PR6 : <<include>>
+PR7 ..> PR8 : <<include>>
+PR8 ..> PR11 : <<include>>
+PR9 ..> PR10 : <<include>>
+PR10 ..> PR11 : <<include>>
+PR7 ..> PR9 : <<extend>>
+
+note right of PR10
+  Reglas predefinidas
+  actualizables sin recompilar.
+  (RF-05, RNF-04)
+end note
+
+note bottom of PR11
+  "La decisión final la toma
+  el agricultor." (RNF-09)
+end note
+
+@enduml
+
+
+' ================================================================
+' 9. MÓDULO TÉCNICO/ADMIN — ACTIVIDADES, REPORTES Y ASESORÍA
+' ================================================================
+@startuml DCU_9_Actividades_Reportes
+title Módulo Técnico/Admin — Actividades, Reportes y Resumen Asesoría\n(RF-07, RF-09)
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase { BackgroundColor #E0F2F1; BorderColor #00695C }
+
+actor "Técnico /\nAdministrador" as T
+actor "Sistema" as S
+
+rectangle "Actividades, Reportes y Asesoría" {
+
+  package "Lista de Actividades" {
+    usecase "Ver actividades\nde todos los productores" as AR1
+    usecase "Filtrar por\nproductor / parcela / fecha" as AR2
+    usecase "Ver detalle de\nactividad individual" as AR3
+    usecase "Agregar nota\ntécnica" as AR4
+    usecase "Marcar actividad\ncomo revisada" as AR5
+  }
+
+  package "Generar Reportes" {
+    usecase "Seleccionar productor\ny período" as AR6
+    usecase "Seleccionar tipo\nde reporte" as AR7
+    usecase "Generar y previsualizar\nreporte" as AR8
+    usecase "Exportar como\ntexto plano o imagen" as AR9
+    usecase "Compartir con\nproductor o asociación" as AR10
+  }
+
+  package "Resumen para Asesoría" {
+    usecase "Ver resumen consolidado\ndel productor" as AR11
+    usecase "Ver si recomendaciones\nfueron seguidas" as AR12
+    usecase "Preparar agenda\nde visita técnica" as AR13
+    usecase "Registrar notas\nde visita realizada" as AR14
+    usecase "Emitir nueva recomendación\ntras la visita" as AR15
+  }
+}
+
+T --> AR1
+T --> AR3
+T --> AR4
+T --> AR5
+T --> AR6
+T --> AR7
+T --> AR9
+T --> AR10
+T --> AR11
+T --> AR12
+T --> AR13
+T --> AR14
+T --> AR15
+S --> AR8
+
+AR1 ..> AR2 : <<extend>>
+AR3 ..> AR4 : <<extend>>
+AR3 ..> AR5 : <<extend>>
+AR6 ..> AR8 : <<include>>
+AR7 ..> AR8 : <<include>>
+AR8 ..> AR9 : <<include>>
+AR9 ..> AR10 : <<extend>>
+AR11 ..> AR12 : <<include>>
+AR13 ..> AR11 : <<include>>
+AR14 ..> AR15 : <<extend>>
+
+note right of AR9
+  Texto plano o imagen
+  para asesoría sin internet.
+  (RF-09)
+end note
+
+note bottom of AR12
+  Vinculado con RF-11:
+  confirmación de seguimiento.
+end note
+
+@enduml

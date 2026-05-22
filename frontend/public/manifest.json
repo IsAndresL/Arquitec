@@ -1,0 +1,23 @@
+{
+  "name": "Smart Farming PWA",
+  "short_name": "SmartFarm",
+  "description": "Aplicación de gestión agrícola offline-first",
+  "start_url": "/?v=2",
+  "display": "standalone",
+  "background_color": "#16a34a",
+  "theme_color": "#16a34a",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
