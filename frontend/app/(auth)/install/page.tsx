@@ -59,7 +59,7 @@ export default function InstallPage() {
           </div>
 
           <button 
-            onClick={() => router.push("/farmer")}
+            onClick={() => { window.location.href = "/farmer?role=farmer"; }}
             className="w-full py-4 rounded-2xl bg-emerald-600 text-white font-black text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/10"
           >
             <span>Ir a Instalar Campesino</span>
@@ -98,7 +98,7 @@ export default function InstallPage() {
           </div>
 
           <button 
-            onClick={() => router.push("/technician")}
+            onClick={() => { window.location.href = "/technician?role=technician"; }}
             className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-blue-600/10"
           >
             <span>Ir a Instalar Técnico</span>
