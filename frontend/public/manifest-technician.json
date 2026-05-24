@@ -1,0 +1,25 @@
+{
+  "name": "Técnico Smart Farming",
+  "short_name": "Técnico SF",
+  "description": "Aplicación de gestión agrícola offline-first para técnicos",
+  "start_url": "/?role=technician",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/Smart_Farming_Logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/Smart_Farming_Logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

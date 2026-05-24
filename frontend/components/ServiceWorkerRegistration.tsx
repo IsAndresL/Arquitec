@@ -75,5 +75,37 @@ export default function ServiceWorkerRegistration() {
     }
   }, [user]);
 
+  // Manejador Dinámico de Manifiesto PWA basado en Rol o Parámetros URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const roleParam = params.get("role");
+      
+      let finalRole = roleParam;
+      if (!finalRole && user) {
+        finalRole = user.type;
+      }
+
+      let manifestHref = "/manifest.json";
+      if (finalRole === "farmer") {
+        manifestHref = "/manifest-farmer.json";
+      } else if (finalRole === "technician") {
+        manifestHref = "/manifest-technician.json";
+      }
+
+      let link: HTMLLinkElement | null = document.querySelector('link[rel="manifest"]');
+      if (link) {
+        if (link.getAttribute("href") !== manifestHref) {
+          link.setAttribute("href", manifestHref);
+        }
+      } else {
+        link = document.createElement("link");
+        link.rel = "manifest";
+        link.href = manifestHref;
+        document.head.appendChild(link);
+      }
+    }
+  }, [user]);
+
   return null;
 }

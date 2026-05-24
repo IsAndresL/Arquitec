@@ -25,7 +25,7 @@ import { ApiError } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loginTechnician, loginFarmer } = useAuth();
+  const { user, loginTechnician, loginFarmer, logout } = useAuth();
   const [mode, setMode] = useState<"selection" | "technician" | "farmer">("selection");
   
   // Technician State
@@ -75,6 +75,25 @@ export default function LoginPage() {
     : [];
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const roleParam = params.get("role");
+      
+      if (roleParam === "farmer") {
+        setMode("farmer");
+        if (user && user.type !== "farmer") {
+          logout();
+          return;
+        }
+      } else if (roleParam === "technician") {
+        setMode("technician");
+        if (user && user.type !== "technician") {
+          logout();
+          return;
+        }
+      }
+    }
+
     if (user) {
       // Ajustamos para que coincida con lo que el dashboard espera
       if (user.type === "technician") {
@@ -83,19 +102,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     }
-  }, [user, router]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const roleParam = params.get("role");
-      if (roleParam === "farmer") {
-        setMode("farmer");
-      } else if (roleParam === "technician") {
-        setMode("technician");
-      }
-    }
-  }, []);
+  }, [user, router, logout]);
 
   const handleTechnicianLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
