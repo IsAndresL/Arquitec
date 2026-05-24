@@ -7,13 +7,18 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://192.168.0.23:3001',
   'http://192.168.80.79:3001',
+  'https://arquitec-dusky.vercel.app',
 ]
 
 export function middleware(request: NextRequest) {
   const origin = request.headers.get('origin') || ''
   
-  // Verificar si el origen está permitido
-  const isAllowedOrigin = allowedOrigins.includes(origin) || !origin
+  // Verificar si el origen está permitido (incluye cualquier subdominio de Vercel para desarrollo/producción)
+  const isAllowedOrigin = 
+    allowedOrigins.includes(origin) || 
+    origin.endsWith('.vercel.app') ||
+    /^http:\/\/localhost:\d+$/.test(origin) ||
+    !origin
 
   // Manejar preflight requests (OPTIONS)
   if (request.method === 'OPTIONS') {
