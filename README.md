@@ -200,4 +200,18 @@ El sistema cuenta con un motor de reglas experto en el backend que opera de form
     *   Guarda el registro y regresa al Dashboard. La IA habra detectado la lluvia y desactiva de forma automatica y transparente todas las alertas de riego pendientes para el campesino, dejando su panel en estado limpio **"Todo en orden"**.
 
 ---
+
+### Prueba E: Pagina de Instalacion e Impresion del Codigo QR Permanente
+1.  Ingresa a la direccion principal de la aplicacion: `https://arquitec-dusky.vercel.app/`
+2.  En la pantalla inicial de seleccion de rol, observa el boton inferior con bordes punteados que dice: **`Instalar App (PWA / APK)`**.
+3.  Presiona el boton. Te redirigira a la ruta publica `/install`.
+4.  Comprobacion del Codigo QR:
+    *   Veras en pantalla un **Codigo QR de alta definicion matematicamente estatico y permanente** que apunta a `https://arquitec-dusky.vercel.app/`.
+    *   Este codigo esta guardado como un asset fisico local en el servidor (`/Smart_Farming_QR.png`). Puedes imprimirlo en folletos, banners o proyectarlo en una pantalla. **Nunca caducara** con el paso del tiempo, ya que prescinde de enlaces de redireccionamiento comerciales intermedios y de pago.
+5.  Comprobacion de la Guia de Instalacion:
+    *   Apareceran dos guias ilustradas paso a paso y detalladas para telefonos celulares:
+        *   **Android (Chrome):** Presionar el menu de tres puntos y luego "Instalar aplicacion".
+        *   **iOS/iPhone (Safari):** Presionar el icono de "Compartir" y luego "Agregar al inicio".
+
+---
 *Magdalena Smart Farming v1.0.0 - Documentacion Oficial del Departamento de Ingenieria de Sistemas, Universidad del Magdalena.*
