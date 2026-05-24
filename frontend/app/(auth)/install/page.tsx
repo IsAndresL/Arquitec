@@ -11,7 +11,7 @@ export default function InstallPage() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       {/* Header Premium */}
       <div className="p-4 flex items-center pt-10 pb-6 rounded-b-[40px] flex-shrink-0 z-10 shadow-sm" style={{ backgroundColor: COLORS.green.primary }}>
-        <button onClick={() => router.push("/")} className="p-2 rounded-xl mr-3 bg-white/20 active:scale-95 transition-all">
+        <button onClick={() => { window.location.href = "https://arquitec-dusky.vercel.app/"; }} className="p-2 rounded-xl mr-3 bg-white/20 active:scale-95 transition-all">
           <ArrowLeft size={20} color={COLORS.white} strokeWidth={2.5} />
         </button>
         <div>
@@ -37,24 +37,6 @@ export default function InstallPage() {
               <h3 className="text-lg font-black text-slate-800">Aplicación del Campesino</h3>
               <p className="text-xs font-bold text-slate-400">Para productores agrícolas y fincas</p>
             </div>
-          </div>
-
-          <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100/50 space-y-2">
-            <span className="text-[10px] font-black uppercase text-emerald-700 tracking-wider">Funciones Incluidas</span>
-            <ul className="text-xs font-bold text-slate-600 space-y-1.5 pl-1">
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                <span>Uso 100% offline (sin internet)</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                <span>Registro rápido de clima y costos</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                <span>Acceso simplificado mediante PIN</span>
-              </li>
-            </ul>
           </div>
 
           {/* Android Installation Helper */}
@@ -96,24 +78,6 @@ export default function InstallPage() {
             </div>
           </div>
 
-          <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 space-y-2">
-            <span className="text-[10px] font-black uppercase text-blue-700 tracking-wider">Funciones Incluidas</span>
-            <ul className="text-xs font-bold text-slate-600 space-y-1.5 pl-1">
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span>Panel administrativo y de control</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span>Gestión de alertas y recomendaciones</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span>Generación de informes para asesorías</span>
-              </li>
-            </ul>
-          </div>
-
           {/* Android/iOS Installation Helper */}
           <div className="space-y-3">
             <h4 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">¿Cómo instalar en el Celular?</h4>
@@ -143,7 +107,7 @@ export default function InstallPage() {
 
         {/* Back Button bottom */}
         <button 
-          onClick={() => router.push("/")}
+          onClick={() => { window.location.href = "https://arquitec-dusky.vercel.app/"; }}
           className="w-full py-4.5 rounded-2xl bg-slate-200 hover:bg-slate-350 text-slate-700 font-black text-base active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
         >
           <ArrowLeft size={18} strokeWidth={3} />
