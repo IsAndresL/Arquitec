@@ -1,3 +1,4 @@
+// Trigger production deploy with frontend root directory settings
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
