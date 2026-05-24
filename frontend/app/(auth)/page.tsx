@@ -85,6 +85,18 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const roleParam = params.get("role");
+      if (roleParam === "farmer") {
+        setMode("farmer");
+      } else if (roleParam === "technician") {
+        setMode("technician");
+      }
+    }
+  }, []);
+
   const handleTechnicianLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setTechError("");
