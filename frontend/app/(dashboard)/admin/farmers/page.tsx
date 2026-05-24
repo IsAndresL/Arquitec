@@ -100,7 +100,7 @@ export default function AdminFarmersPage() {
   return (
     <div className="min-h-screen relative bg-gray-50 pb-24">
       {/* Header azul oficial de Figma */}
-      <div className="p-4 flex items-center pt-8 rounded-b-[30px]" style={{ backgroundColor: COLORS.blue.primary }}>
+      <div className="p-4 flex items-center pt-10 pb-6 rounded-b-[40px]" style={{ backgroundColor: COLORS.blue.primary }}>
         <Link href="/admin" className="p-2 rounded-xl mr-3 hover:scale-105 active:scale-95 transition-transform" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
           <ArrowLeft size={20} color={COLORS.white} strokeWidth={2.5} />
         </Link>

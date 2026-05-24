@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { db, addToSyncQueue, addActivityLog } from "@/lib/db";
 import { api } from "@/lib/api";
-import { FarmParcel, Alert, InputRecord, Recommendation, CropObservation } from "@/types";
+import { FarmParcel, Alert, InputRecord, Recommendation, CropObservation, FarmerProfile } from "@/types";
+import { syncData } from "@/hooks/useSync";
+import { notifications } from "@/lib/notifications";
 import { 
   Bell, 
   Settings, 
@@ -18,14 +20,17 @@ import {
   ChevronRight,
   Sun,
   Check,
-  X
+  X,
+  RefreshCw,
+  MessageSquare
 } from "lucide-react";
 import { COLORS } from "@/lib/design-system";
 import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, isOnline } = useAuth();
-  const farmer = user?.data;
+  const isFarmer = user?.type === "farmer";
+  const farmer = isFarmer ? (user?.data as FarmerProfile) : null;
   const farmerId = farmer?.id;
   
   const [stats, setStats] = useState({
@@ -39,6 +44,14 @@ export default function DashboardPage() {
   const [activeAlerts, setActiveAlerts] = useState<Alert[]>([]);
   const [selectedAlertForAction, setSelectedAlertForAction] = useState<Alert | null>(null);
   const [isUpdatingAlert, setIsUpdatingAlert] = useState(false);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
+
+  // Solicitar permiso de notificación HTML5 al ingresar
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      notifications.requestPermission().catch(console.error);
+    }
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!farmerId) {
@@ -102,6 +115,23 @@ export default function DashboardPage() {
       const totalCosts = inputs.reduce((sum, input) => sum + (input.cost || 0), 0);
       const pendingRecommendations = recommendations.filter((r) => r.status === "PENDIENTE");
 
+      // Fire notifications if new technical advice or critical alert arrived (after initial load)
+      const prevAlerts = activeAlerts.length;
+      if (activeAlertList.length > prevAlerts && prevAlerts > 0) {
+        notifications.show(
+          "Accion Urgente Requerida",
+          activeAlertList[0].description || "Tu asesor tecnico ha enviado una nueva alerta critica de cultivo."
+        );
+      }
+
+      const prevRecs = stats.recommendations;
+      if (pendingRecommendations.length > prevRecs && prevRecs > 0) {
+        notifications.show(
+          "Nuevo Consejo Agricola",
+          pendingRecommendations[0].title || "Tienes una nueva recomendacion tecnica por revisar."
+        );
+      }
+
       setStats({
         parcels: parcels.length,
         observations: observations.length,
@@ -115,11 +145,69 @@ export default function DashboardPage() {
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
       setActiveAlerts(sortedActiveAlerts);
+
+      // Calcular cantidad de cambios pendientes locales
+      const [pParcels, pObs, pInputs, pClimate, pAlerts] = await Promise.all([
+        db.parcels.where("syncStatus").equals("PENDIENTE").count(),
+        db.observations.where("syncStatus").equals("PENDIENTE").count(),
+        db.inputs.where("syncStatus").equals("PENDIENTE").count(),
+        db.climateRecords.where("syncStatus").equals("PENDIENTE").count(),
+        db.alerts.where("syncStatus").equals("PENDIENTE").count(),
+      ]);
+      setPendingSyncCount(pParcels + pObs + pInputs + pClimate + pAlerts);
     } catch (error) {
       console.error("Error loading dashboard:", error);
     }
     setIsLoading(false);
-  }, [farmerId]);
+  }, [farmerId, activeAlerts.length, stats.recommendations]);
+
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
+
+  const handleSync = useCallback(async () => {
+    if (!farmerId) return;
+    setIsSyncing(true);
+    setSyncMessage("Sincronizando...");
+    try {
+      const res = await syncData(farmerId);
+      if (res.success) {
+        setSyncMessage("¡Sincronizado!");
+        notifications.show(
+          "Sincronizacion Exitosa",
+          "Tus parcelas, insumos y clima se han sincronizado con el asesor tecnico de manera correcta."
+        );
+        setTimeout(() => setSyncMessage(""), 3000);
+        await loadData();
+      } else {
+        setSyncMessage("Error de sincronización");
+        setTimeout(() => setSyncMessage(""), 3000);
+      }
+    } catch (err) {
+      console.error("Sync error:", err);
+      setSyncMessage("Error de conexión");
+      setTimeout(() => setSyncMessage(""), 3000);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [farmerId, loadData]);
+
+  // Sincronización automática al detectar conexión a Internet
+  useEffect(() => {
+    if (isOnline && farmerId) {
+      syncData(farmerId)
+        .then((res) => {
+          if (res.success) {
+            notifications.show(
+              "Sincronizacion Automatica",
+              "Se detecto conexion a internet. Los datos locales pendientes han sido sincronizados automaticamente con el tecnico."
+            );
+            loadData();
+          }
+        })
+        .catch(console.error);
+    }
+  }, [isOnline, farmerId, loadData]);
+
 
   const handleToggleAlertDone = async (alertId: string, markDone: boolean) => {
     if (!markDone) {
@@ -191,11 +279,25 @@ export default function DashboardPage() {
             </div>
           </Link>
           <div className="flex items-center gap-2.5">
+            {syncMessage && (
+              <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 text-white px-3 py-1.5 rounded-full animate-pulse mr-1">
+                {syncMessage}
+              </span>
+            )}
             {!isOnline && (
-              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white animate-pulse">
+              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white animate-pulse mr-1">
                 Offline
               </span>
             )}
+            <button 
+              onClick={handleSync} 
+              disabled={isSyncing}
+              className="p-3 rounded-xl transition-transform active:scale-90 flex items-center justify-center cursor-pointer" 
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+              title="Sincronizar datos"
+            >
+              <RefreshCw size={24} color={COLORS.white} strokeWidth={3} className={isSyncing ? "animate-spin" : ""} />
+            </button>
             <Link href="/alerts" className="relative p-3 rounded-xl transition-transform active:scale-90" style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}>
               <Bell size={24} color={COLORS.white} strokeWidth={3} />
               {totalNotifications > 0 && (
@@ -210,6 +312,43 @@ export default function DashboardPage() {
 
       {/* Main compact body with soft background and grouped elements */}
       <div className="p-6 flex-1 flex flex-col gap-6 overflow-y-auto min-h-0" style={{ backgroundColor: COLORS.gray.pale }}>
+        {/* Barra de Estado de Sincronización y Conexión */}
+        <div className="w-full p-4 rounded-[28px] bg-white border border-gray-100/60 flex items-center justify-between shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${isOnline ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600 animate-pulse'}`}>
+              <RefreshCw size={20} className={isSyncing ? "animate-spin" : ""} />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Última Sincronización</span>
+                <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-ping'}`} />
+              </div>
+              <p className="text-xs font-bold text-gray-700 mt-1">
+                {farmer?.lastSyncAt 
+                  ? new Date(farmer.lastSyncAt).toLocaleString('es-CO', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
+                  : 'Sin sincronización reciente'
+                }
+              </p>
+            </div>
+          </div>
+          
+          {pendingSyncCount > 0 ? (
+            <div className="px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200/50 flex items-center gap-1.5 animate-pulse shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              <span className="text-[9px] font-black uppercase text-amber-700 tracking-wider">
+                {pendingSyncCount} pendientes
+              </span>
+            </div>
+          ) : (
+            <div className="px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/50 flex items-center gap-1.5 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[9px] font-black uppercase text-emerald-700 tracking-wider">
+                Al día
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Alerts section */}
         {activeAlerts.length > 0 ? (
           <div className="space-y-4 w-full flex-shrink-0">

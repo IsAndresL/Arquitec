@@ -20,6 +20,7 @@ export async function exportToCSV(farmerId: string): Promise<Blob> {
   const parcels = await db.parcels.where("farmerId").equals(farmerId).toArray();
   const observations = await db.observations.where("farmerId").equals(farmerId).toArray();
   const inputs = await db.inputs.where("farmerId").equals(farmerId).toArray();
+  const climate = await db.climateRecords.where("farmerId").equals(farmerId).toArray();
   const alerts = await db.alerts.where("farmerId").equals(farmerId).toArray();
   const recommendations = await db.recommendations.where("farmerId").equals(farmerId).toArray();
 
@@ -89,6 +90,19 @@ export async function exportToCSV(farmerId: string): Promise<Blob> {
 
   const totalCost = inputs.reduce((sum, i) => sum + (i.cost || 0), 0);
   sections.push(`\nTOTAL DE COSTOS,${totalCost}`);
+
+  // Sección: Clima
+  sections.push("\nREGISTROS CLIMÁTICOS");
+  sections.push(
+    convertToCSV(
+      ["Fecha", "Estado Clima", "Anotaciones"],
+      climate.map((c) => [
+        new Date(c.date).toLocaleDateString("es-CO"),
+        c.type,
+        c.notes || "",
+      ])
+    )
+  );
 
   // Sección: Alertas
   sections.push("\nALERTAS");

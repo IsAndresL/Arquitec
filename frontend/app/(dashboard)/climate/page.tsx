@@ -30,6 +30,8 @@ export default function ClimatePage() {
   const [notes, setNotes] = useState("");
   const [history, setHistory] = useState<ClimateRecord[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isFetchingWeather, setIsFetchingWeather] = useState(false);
+  const [weatherLog, setWeatherLog] = useState("");
 
   // Fecha actual formateada (ej. 4 de mayo, 2026)
   const today = new Date();
@@ -62,7 +64,63 @@ export default function ClimatePage() {
 
   useEffect(() => {
     loadHistory();
-  }, [farmerId]);
+    
+    // Autoconsultar clima si hay internet
+    if (isOnline && typeof navigator !== "undefined" && navigator.geolocation) {
+      setIsFetchingWeather(true);
+      setWeatherLog("📍 Localizando tu parcela...");
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            setWeatherLog("🌤️ Consultando clima satelital...");
+            
+            const response = await fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
+            );
+            const data = await response.json();
+            
+            if (data?.current_weather) {
+              const code = data.current_weather.weathercode;
+              const temp = data.current_weather.temperature;
+              const wind = data.current_weather.windspeed;
+              
+              // Mapear código de Open-Meteo
+              let detected: 'SOL' | 'NUBLADO' | 'LLUVIA' | 'VIENTO' = 'SOL';
+              if (code >= 51 && code <= 82) {
+                detected = 'LLUVIA';
+              } else if (code >= 45 && code <= 48) {
+                detected = 'NUBLADO';
+              } else if (wind > 20) {
+                detected = 'VIENTO';
+              } else if (code > 3) {
+                detected = 'NUBLADO';
+              }
+              
+              setClimateType(detected);
+              setWeatherLog(`✅ Clima detectado: Temp. ${temp}°C, estado: ${detected}`);
+              setNotes(prev => prev ? prev : `Registro automático por GPS. Temperatura: ${temp}°C, viento: ${wind} km/h.`);
+            } else {
+              setWeatherLog("⚠️ No se pudo obtener el clima satelital.");
+            }
+          } catch (err) {
+            console.error("Error fetching weather:", err);
+            setWeatherLog("⚠️ Error al consultar el clima.");
+          } finally {
+            setIsFetchingWeather(false);
+          }
+        },
+        (error) => {
+          console.warn("Geolocation error:", error);
+          setWeatherLog("⚠️ Permiso de ubicación denegado.");
+          setIsFetchingWeather(false);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      setWeatherLog("📴 Modo offline: Selecciona el clima de hoy.");
+    }
+  }, [farmerId, isOnline]);
 
   const handleSave = async () => {
     if (!farmerId) {
@@ -124,6 +182,12 @@ export default function ClimatePage() {
 
       <div className="p-6 -mt-6">
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-8">
+          {weatherLog && (
+            <div className="p-3.5 rounded-xl text-xs font-black mb-6 flex items-center gap-2.5 bg-amber-50/50 border border-amber-100/60 text-amber-900 leading-none">
+              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isFetchingWeather ? 'bg-amber-500 animate-ping' : 'bg-green-500'}`}></span>
+              <span>{weatherLog}</span>
+            </div>
+          )}
           <p className="mb-2 text-xs font-bold tracking-wider" style={{ color: COLORS.gray.medium, fontFamily: 'DM Sans, sans-serif' }}>
             FECHA
           </p>

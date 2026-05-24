@@ -96,6 +96,29 @@ export async function syncData(farmerId: string): Promise<{ success: boolean; me
       }
     }
 
+    // Sincronizar registros climáticos pendientes
+    const pendingClimate = await db.climateRecords
+      .where("syncStatus")
+      .equals("PENDIENTE")
+      .toArray();
+    
+    if (pendingClimate.length > 0) {
+      await api.syncData(
+        farmerId,
+        "ClimateRecord",
+        pendingClimate.map((c) => ({
+          id: c.id,
+          date: c.date,
+          type: c.type,
+          notes: c.notes,
+          farmerId: c.farmerId,
+        }))
+      );
+      for (const record of pendingClimate) {
+        await db.climateRecords.update(record.id, { syncStatus: "SINCRONIZADO" });
+      }
+    }
+
     // Sincronizar alertas pendientes usando la cola
     const pendingAlerts = await db.alerts
       .where("syncStatus")
@@ -168,6 +191,13 @@ async function refreshData(farmerId: string): Promise<void> {
     const recsArr = Array.isArray(serverRecommendations) ? serverRecommendations : serverRecommendations?.data || [];
     if (recsArr.length > 0) {
       await db.recommendations.bulkPut(recsArr);
+    }
+
+    // Obtener registros climáticos del servidor
+    const serverClimate = await api.getClimateRecords(farmerId);
+    const climateArr = Array.isArray(serverClimate) ? serverClimate : serverClimate?.data || [];
+    if (climateArr.length > 0) {
+      await db.climateRecords.bulkPut(climateArr);
     }
   } catch (error) {
     console.error("Error refreshing data:", error);

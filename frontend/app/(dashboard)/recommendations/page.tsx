@@ -10,7 +10,8 @@ import {
   CheckCircle,
   Info,
   HelpCircle,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from "lucide-react";
 import { COLORS } from "@/lib/design-system";
 import Link from "next/link";
@@ -49,7 +50,7 @@ export default function RecommendationsPage() {
   return (
     <div className="h-full relative overflow-y-auto" style={{ backgroundColor: COLORS.white }}>
       {/* Header Figma Refined */}
-      <div className="p-4 flex items-center pt-8 rounded-b-[30px]" style={{ backgroundColor: COLORS.blue.primary }}>
+      <div className="p-4 flex items-center pt-10 pb-6 rounded-b-[40px]" style={{ backgroundColor: COLORS.blue.primary }}>
         <Link href="/dashboard" className="p-2 rounded-xl mr-3" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
           <ArrowLeft size={20} color={COLORS.white} strokeWidth={2.5} />
         </Link>
@@ -66,6 +67,24 @@ export default function RecommendationsPage() {
             Sigue estas recomendaciones para mejorar la salud y el rendimiento de tus parcelas.
           </p>
         </div>
+
+        {/* Chat con el Técnico */}
+        <Link 
+          href="/chat" 
+          className="p-5 rounded-3xl flex items-center justify-between bg-white border border-blue-100 hover:scale-[1.01] active:scale-95 transition-all shadow-sm group"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600">
+              <MessageSquare size={22} strokeWidth={2.5} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">Chat con el Técnico</p>
+              <p className="text-[11px] font-semibold text-gray-400">Resuelve tus dudas en tiempo real</p>
+            </div>
+          </div>
+          <ChevronRight size={20} className="text-gray-300 group-hover:text-gray-400 shrink-0" />
+        </Link>
+
 
         {recommendations.length === 0 ? (
           <div className="text-center py-24">

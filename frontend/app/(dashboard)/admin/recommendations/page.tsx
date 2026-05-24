@@ -55,7 +55,7 @@ export default function AdminRecommendationsPage() {
   return (
     <div className="h-full relative overflow-y-auto" style={{ backgroundColor: COLORS.white }}>
       {/* Header oficial de Figma */}
-      <div className="p-4 flex items-center" style={{ backgroundColor: COLORS.blue.primary }}>
+      <div className="p-4 flex items-center pt-10 pb-6 rounded-b-[40px]" style={{ backgroundColor: COLORS.blue.primary }}>
         <Link href="/admin" className="p-2 rounded-xl mr-3" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
           <ArrowLeft size={20} color={COLORS.white} strokeWidth={2.5} />
         </Link>

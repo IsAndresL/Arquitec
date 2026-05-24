@@ -141,14 +141,23 @@ export default function FarmerDetailsPage() {
              <span className="text-3xl font-bold text-blue-600">{initials}</span>
           </div>
           <h1 className="text-2xl font-bold text-white mb-1 drop-shadow-md">{farmer.name}</h1>
-          <div className="flex items-center gap-1 text-gray-700 bg-white/95 px-3 py-1 rounded-full shadow-sm text-xs font-bold">
-            <MapPin size={12} className="text-blue-500" />
-            {farmer.municipality || "Sin municipio"} • {farmer.vereda || "Sin vereda"}
+          <div className="flex flex-col items-center gap-2 mt-1">
+            <div className="flex items-center gap-1 text-gray-700 bg-white/95 px-3 py-1 rounded-full shadow-sm text-xs font-bold">
+              <MapPin size={12} className="text-blue-500" />
+              {farmer.municipality || "Sin municipio"} • {farmer.vereda || "Sin vereda"}
+            </div>
+            <Link 
+              href={`/chat?farmerId=${farmer.id}`}
+              className="flex items-center gap-1.5 text-white bg-green-600 hover:bg-green-500 active:scale-95 transition-all px-4 py-2 rounded-xl shadow-md text-xs font-extrabold"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>Hablar con el Campesino</span>
+            </Link>
           </div>
         </div>
       </div>
 
-      <div className="p-4 mt-24 space-y-6">
+      <div className="p-4 mt-28 space-y-6">
         
         {/* Estadísticas Rápidas */}
         <div className="grid grid-cols-2 gap-4">

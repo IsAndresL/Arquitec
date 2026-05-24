@@ -92,7 +92,7 @@ export default function AlertsPage() {
   return (
     <div className="h-screen flex flex-col bg-white overflow-hidden animate-in fade-in duration-300">
       {/* Header */}
-      <div className="p-5 flex items-center rounded-b-[30px] flex-shrink-0" style={{ backgroundColor: COLORS.red.primary }}>
+      <div className="p-5 flex items-center pt-10 pb-7 rounded-b-[40px] flex-shrink-0" style={{ backgroundColor: COLORS.red.primary }}>
         <Link href="/dashboard" className="p-3 rounded-xl mr-4 hover:opacity-90 active:scale-95 transition-all" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
           <ArrowLeft size={22} color={COLORS.white} strokeWidth={3} />
         </Link>
