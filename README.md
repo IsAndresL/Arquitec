@@ -209,11 +209,12 @@ El sistema cuenta con un motor de reglas experto en el backend que opera de form
     *   El **Codigo QR fisico permanente** de alta definicion esta guardado localmente en tu carpeta de assets de la aplicacion (`/public/Smart_Farming_QR.png`).
     *   Este codigo QR apunta directamente a la guia de instalacion en: `https://arquitec-dusky.vercel.app/install`.
     *   Puedes descargar esta imagen, imprimirla en folletos, afiches o compartirla directamente. **Nunca caducara** con el paso del tiempo, ya que no depende de intermediarios de redireccion de pago.
-    *   Para una excelente usabilidad, en la pagina de instalacion `/install` ya no se muestra la imagen del codigo QR (puesto que el campesino ya lo habra escaneado para llegar alli), mostrando directamente los beneficios y la guia paso a paso de instalacion.
-5.  Comprobacion de la Guia de Instalacion:
-    *   Apareceran dos guias ilustradas paso a paso y detalladas para telefonos celulares:
-        *   **Android (Chrome):** Presionar el menu de tres puntos y luego "Instalar aplicacion".
-        *   **iOS/iPhone (Safari):** Presionar el icono de "Compartir" y luego "Agregar al inicio".
+    *   Para una excelente usabilidad, en la pagina de instalacion `/install` ya no se muestra la imagen del codigo QR (puesto que el campesino ya lo habra escaneado para llegar alli).
+5.  Comprobacion de la Separacion de Aplicaciones (Instalacion Personalizada):
+    *   En `/install` encontraras dos secciones claramente diferenciadas: **Aplicación del Campesino** y **Aplicación del Técnico**, cada una con sus beneficios e instrucciones.
+    *   **Instalacion de Campesino:** Presiona el boton **"Ir a Instalar Campesino"**. Te redirigira a la pantalla de acceso con el PIN Pad de Campesino (`/?role=farmer`), saltandose la pantalla de seleccion inicial de rol. Si realizas el proceso de "Agregar al inicio" en tu navegador estando en esta pantalla, se creara un acceso directo (PWA/APK) personalizado que se abrira **siempre directo en el acceso de campesino**.
+    *   **Instalacion de Tecnico:** Presiona el boton **"Ir a Instalar Tecnico"**. Te redirigira a la pantalla de login con correo y contraseña (`/?role=technician`), saltandose la pantalla de seleccion. Si realizas el proceso de "Agregar al inicio" en tu navegador estando en esta pantalla, se creara un acceso directo personalizado que se abrira **siempre directo en el acceso de tecnico**.
+    *   De esta manera, el usuario puede tener **dos iconos de aplicacion separados** e independientes en la pantalla de inicio de su telefono celular.
 
 ---
 *Magdalena Smart Farming v1.0.0 - Documentacion Oficial del Departamento de Ingenieria de Sistemas, Universidad del Magdalena.*
