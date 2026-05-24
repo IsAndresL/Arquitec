@@ -66,8 +66,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans bg-white text-gray-900 antialiased">
         <ClientLayout>
           {children}
+          <ServiceWorkerRegistration />
         </ClientLayout>
-        <ServiceWorkerRegistration />
       </body>
     </html>
   );

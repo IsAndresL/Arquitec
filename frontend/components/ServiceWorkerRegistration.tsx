@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ServiceWorkerRegistration() {
+  const { user } = useAuth();
+
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
@@ -27,13 +30,50 @@ export default function ServiceWorkerRegistration() {
                 });
               }
             });
+
+            // Enviar info de usuario inicial tras registro exitoso
+            if (registration.active && user) {
+              const token = localStorage.getItem("sf_token");
+              registration.active.postMessage({
+                type: "SET_USER_INFO",
+                token,
+                farmerId: user.type === "farmer" ? user.data.id : null,
+                role: user.type,
+                partnerName: user.type === "farmer" ? "Asesor Técnico" : "Productor"
+              });
+            }
           })
           .catch((error) => {
             console.log("SW registration failed:", error);
           });
       });
     }
-  }, []);
+  }, [user]);
+
+  // Sincronizar info de usuario en tiempo de ejecución al cambiar de sesión o login/logout
+  useEffect(() => {
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      if (user) {
+        const token = localStorage.getItem("sf_token");
+        navigator.serviceWorker.controller.postMessage({
+          type: "SET_USER_INFO",
+          token,
+          farmerId: user.type === "farmer" ? user.data.id : null,
+          role: user.type,
+          partnerName: user.type === "farmer" ? "Asesor Técnico" : "Productor"
+        });
+      } else {
+        // Limpiar credenciales al cerrar sesión
+        navigator.serviceWorker.controller.postMessage({
+          type: "SET_USER_INFO",
+          token: null,
+          farmerId: null,
+          role: null,
+          partnerName: null
+        });
+      }
+    }
+  }, [user]);
 
   return null;
 }
