@@ -206,8 +206,10 @@ El sistema cuenta con un motor de reglas experto en el backend que opera de form
 2.  En la pantalla inicial de seleccion de rol, observa el boton inferior con bordes punteados que dice: **`Instalar App (PWA / APK)`**.
 3.  Presiona el boton. Te redirigira a la ruta publica `/install`.
 4.  Comprobacion del Codigo QR:
-    *   Veras en pantalla un **Codigo QR de alta definicion matematicamente estatico y permanente** que apunta a `https://arquitec-dusky.vercel.app/`.
-    *   Este codigo esta guardado como un asset fisico local en el servidor (`/Smart_Farming_QR.png`). Puedes imprimirlo en folletos, banners o proyectarlo en una pantalla. **Nunca caducara** con el paso del tiempo, ya que prescinde de enlaces de redireccionamiento comerciales intermedios y de pago.
+    *   El **Codigo QR fisico permanente** de alta definicion esta guardado localmente en tu carpeta de assets de la aplicacion (`/public/Smart_Farming_QR.png`).
+    *   Este codigo QR apunta directamente a la guia de instalacion en: `https://arquitec-dusky.vercel.app/install`.
+    *   Puedes descargar esta imagen, imprimirla en folletos, afiches o compartirla directamente. **Nunca caducara** con el paso del tiempo, ya que no depende de intermediarios de redireccion de pago.
+    *   Para una excelente usabilidad, en la pagina de instalacion `/install` ya no se muestra la imagen del codigo QR (puesto que el campesino ya lo habra escaneado para llegar alli), mostrando directamente los beneficios y la guia paso a paso de instalacion.
 5.  Comprobacion de la Guia de Instalacion:
     *   Apareceran dos guias ilustradas paso a paso y detalladas para telefonos celulares:
         *   **Android (Chrome):** Presionar el menu de tres puntos y luego "Instalar aplicacion".
