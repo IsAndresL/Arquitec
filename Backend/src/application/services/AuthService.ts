@@ -123,6 +123,8 @@ export class AuthService {
         id: authenticatedFarmer.id,
         name: authenticatedFarmer.name,
         photoUrl: authenticatedFarmer.photoUrl,
+        municipality: authenticatedFarmer.municipality,
+        vereda: authenticatedFarmer.vereda,
       },
     };
   }
