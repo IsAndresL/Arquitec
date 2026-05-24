@@ -188,6 +188,14 @@ export const api = {
     fetchApi(`/reports/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteReport: (id: string) =>
     fetchApi(`/reports/${id}`, { method: "DELETE" }),
+
+  // Chat API
+  getChatMessages: (farmerId: string) => fetchApi(`/chat?farmerId=${farmerId}`),
+  sendChatMessage: (farmerId: string, sender: "farmer" | "technician", text: string) =>
+    fetchApi("/chat", {
+      method: "POST",
+      body: JSON.stringify({ farmerId, sender, text }),
+    }),
 };
 
 export { ApiError };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   ArrowLeft, 
@@ -52,7 +52,7 @@ function ChatInner() {
     }
   }, [isFarmer, queryFarmerId]);
 
-  // Cargar historial persistido localmente
+  // Cargar historial persistido localmente inicialmente
   useEffect(() => {
     const key = `sf_chat_history_${farmerId}`;
     const stored = localStorage.getItem(key);
@@ -60,7 +60,7 @@ function ChatInner() {
       setMessages(JSON.parse(stored));
     } else {
       // Mensaje de bienvenida del técnico
-      const farmerDisplayName = isFarmer ? user.data.name : partnerName;
+      const farmerDisplayName = isFarmer ? user?.data?.name : partnerName;
       const welcome: Message = {
         id: "welcome",
         sender: "technician",
@@ -70,97 +70,141 @@ function ChatInner() {
       setMessages([welcome]);
       localStorage.setItem(key, JSON.stringify([welcome]));
     }
-  }, [farmerId, isFarmer, partnerName]);
+  }, [farmerId, isFarmer, partnerName, user?.data?.name]);
 
   // Autodesplazamiento al final de los mensajes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // Escuchar cambios de almacenamiento en tiempo real (para el intercambio de pestañas)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === `sf_chat_history_${farmerId}` && e.newValue) {
-        const parsed = JSON.parse(e.newValue);
-        setMessages(parsed);
+  // Fetch de mensajes desde el servidor
+  const fetchMessages = useCallback(async () => {
+    if (!farmerId || farmerId === "default") return;
+    try {
+      const remoteMessages = await api.getChatMessages(farmerId);
+      if (Array.isArray(remoteMessages)) {
+        const key = `sf_chat_history_${farmerId}`;
+        const currentStored = localStorage.getItem(key);
+        const currentMsgs = currentStored ? JSON.parse(currentStored) : [];
         
-        // Disparar notificación si el último mensaje es del compañero
-        if (parsed.length > 0) {
-          const lastMsg = parsed[parsed.length - 1];
+        // Si hay nuevos mensajes
+        if (remoteMessages.length > currentMsgs.length) {
+          const lastRemote = remoteMessages[remoteMessages.length - 1];
           const myRole = isFarmer ? "farmer" : "technician";
-          if (lastMsg.sender !== myRole) {
+          
+          if (lastRemote.sender !== myRole) {
+            // Notificación nativa premium con vibración y tono de audio
             notifications.show(
               isFarmer ? "Respuesta del Asesor" : `Mensaje de ${partnerName}`,
-              lastMsg.text
+              lastRemote.text
             );
           }
+          
+          setMessages(remoteMessages);
+          localStorage.setItem(key, JSON.stringify(remoteMessages));
+        } else if (remoteMessages.length !== currentMsgs.length) {
+          setMessages(remoteMessages);
+          localStorage.setItem(key, JSON.stringify(remoteMessages));
         }
       }
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    } catch (err) {
+      console.warn("Fallo al obtener mensajes remotos:", err);
+    }
   }, [farmerId, isFarmer, partnerName]);
 
-  const saveHistory = (newMessages: Message[]) => {
-    setMessages(newMessages);
-    localStorage.setItem(`sf_chat_history_${farmerId}`, JSON.stringify(newMessages));
-  };
+  // Procesar cola de mensajes pendientes de envío offline
+  const processPendingQueue = useCallback(async () => {
+    if (!farmerId || farmerId === "default") return;
+    const pendingKey = `sf_pending_chat_${farmerId}`;
+    const pendingStored = localStorage.getItem(pendingKey);
+    if (!pendingStored) return;
 
-  const handleSendMessage = (e: React.FormEvent) => {
+    const pendingQueue: Message[] = JSON.parse(pendingStored);
+    if (pendingQueue.length === 0) return;
+
+    console.log(`[Chat] Intentando enviar ${pendingQueue.length} mensajes pendientes offline...`);
+    const remaining: Message[] = [];
+
+    for (const msg of pendingQueue) {
+      try {
+        await api.sendChatMessage(farmerId, msg.sender, msg.text);
+      } catch (err) {
+        console.warn("Error al enviar mensaje pendiente:", err);
+        remaining.push(msg);
+      }
+    }
+
+    if (remaining.length > 0) {
+      localStorage.setItem(pendingKey, JSON.stringify(remaining));
+    } else {
+      localStorage.removeItem(pendingKey);
+      fetchMessages();
+    }
+  }, [farmerId, fetchMessages]);
+
+  // Polling en segundo plano cada 3 segundos
+  useEffect(() => {
+    if (!farmerId || farmerId === "default") return;
+
+    processPendingQueue();
+    fetchMessages();
+
+    const interval = setInterval(() => {
+      processPendingQueue();
+      fetchMessages();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [farmerId, fetchMessages, processPendingQueue]);
+
+  // Evento de conexión para vaciar cola inmediatamente
+  useEffect(() => {
+    const handleOnline = () => {
+      processPendingQueue();
+    };
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [processPendingQueue]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
     const myRole = isFarmer ? "farmer" : "technician";
+    const text = inputText.trim();
 
     const myMessage: Message = {
       id: crypto.randomUUID(),
       sender: myRole,
-      text: inputText.trim(),
+      text: text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    const updated = [...messages, myMessage];
-    saveHistory(updated);
+    // Agregar de forma local e instantánea para mejor usabilidad visual
+    const key = `sf_chat_history_${farmerId}`;
+    const stored = localStorage.getItem(key);
+    const currentMsgs = stored ? JSON.parse(stored) : [];
+    const updated = [...currentMsgs, myMessage];
+    setMessages(updated);
+    localStorage.setItem(key, JSON.stringify(updated));
     setInputText("");
 
-    // Trigger sound and vibration
     if ("vibrate" in navigator) {
       navigator.vibrate(50);
     }
 
-    // Simular respuesta inteligente del técnico SOLO si es el productor el que escribe
-    if (isFarmer) {
-      setIsTyping(true);
-      setTimeout(() => {
-        let replyText = "¡Hola! Estoy revisando tus reportes de cultivo y parcelas. Recuerda registrar tus observaciones de salud y costos para poder brindarte una mejor asesoría técnica.";
-        const query = myMessage.text.toLowerCase();
-
-        if (query.includes("plaga") || query.includes("amarill") || query.includes("manch") || query.includes("hongo") || query.includes("enfermo")) {
-          replyText = "He detectado tu mensaje sobre posibles plagas o anomalías en las hojas. Te aconsejo revisar el nivel de humedad y aplicar un fungicida preventivo orgánico. Ya he cargado una recomendación técnica en tu panel para que la revises.";
-        } else if (query.includes("clima") || query.includes("lluvia") || query.includes("nublado") || query.includes("sol") || query.includes("temperatura")) {
-          replyText = "Entendido. Recuerda registrar el clima de hoy en tu sección de 'Clima'. Si se avecinan lluvias fuertes, suspende la fertilización temporalmente para evitar que el agua lave los nutrientes del suelo.";
-        } else if (query.includes("riego") || query.includes("agua") || query.includes("seco") || query.includes("seco") || query.includes("sequia")) {
-          replyText = "El control de humedad es vital en esta etapa del cultivo. Asegúrate de regar por goteo temprano en la mañana o al final de la tarde para evitar la evaporación rápida del agua.";
-        } else if (query.includes("hola") || query.includes("buen") || query.includes("salud")) {
-          const farmerName = user?.type === "farmer" ? user.data.name : "Productor";
-          replyText = `¡Hola, ${farmerName}! Espero que todo vaya excelente en tu finca. ¿Hay algún aspecto particular del cultivo en el que te pueda ayudar hoy?`;
-        } else if (query.includes("gracias") || query.includes("listo") || query.includes("perfecto")) {
-          replyText = "¡Con gusto! Estoy aquí para apoyarte. Mantén tus registros al día y no dudes en escribirme si notas algún cambio en tus parcelas.";
-        }
-
-        const technicianReply: Message = {
-          id: crypto.randomUUID(),
-          sender: "technician",
-          text: replyText,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-
-        setIsTyping(false);
-        saveHistory([...updated, technicianReply]);
-
-        // Disparar alerta nativa
-        notifications.show("Respuesta del Asesor", replyText);
-      }, 1500);
+    // Intentar enviar al servidor
+    try {
+      await api.sendChatMessage(farmerId, myRole, text);
+      fetchMessages();
+    } catch (err) {
+      console.warn("Fallo al transmitir mensaje, guardando en cola offline:", err);
+      // Guardar en cola
+      const pendingKey = `sf_pending_chat_${farmerId}`;
+      const pendingStored = localStorage.getItem(pendingKey);
+      const pendingQueue = pendingStored ? JSON.parse(pendingStored) : [];
+      pendingQueue.push(myMessage);
+      localStorage.setItem(pendingKey, JSON.stringify(pendingQueue));
     }
   };
 

@@ -312,43 +312,6 @@ export default function DashboardPage() {
 
       {/* Main compact body with soft background and grouped elements */}
       <div className="p-6 flex-1 flex flex-col gap-6 overflow-y-auto min-h-0" style={{ backgroundColor: COLORS.gray.pale }}>
-        {/* Barra de Estado de Sincronización y Conexión */}
-        <div className="w-full p-4 rounded-[28px] bg-white border border-gray-100/60 flex items-center justify-between shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${isOnline ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600 animate-pulse'}`}>
-              <RefreshCw size={20} className={isSyncing ? "animate-spin" : ""} />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 leading-none">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Última Sincronización</span>
-                <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-ping'}`} />
-              </div>
-              <p className="text-xs font-bold text-gray-700 mt-1">
-                {farmer?.lastSyncAt 
-                  ? new Date(farmer.lastSyncAt).toLocaleString('es-CO', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
-                  : 'Sin sincronización reciente'
-                }
-              </p>
-            </div>
-          </div>
-          
-          {pendingSyncCount > 0 ? (
-            <div className="px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200/50 flex items-center gap-1.5 animate-pulse shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              <span className="text-[9px] font-black uppercase text-amber-700 tracking-wider">
-                {pendingSyncCount} pendientes
-              </span>
-            </div>
-          ) : (
-            <div className="px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/50 flex items-center gap-1.5 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-[9px] font-black uppercase text-emerald-700 tracking-wider">
-                Al día
-              </span>
-            </div>
-          )}
-        </div>
-
         {/* Alerts section */}
         {activeAlerts.length > 0 ? (
           <div className="space-y-4 w-full flex-shrink-0">
@@ -522,6 +485,43 @@ export default function DashboardPage() {
            )}
            <ChevronRight size={22} color={COLORS.gray.light} className="flex-shrink-0" />
         </Link>
+
+        {/* Barra de Estado de Sincronización y Conexión en la parte inferior */}
+        <div className="w-full p-4 rounded-[28px] bg-white border border-gray-100/60 flex items-center justify-between shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${isOnline ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600 animate-pulse'}`}>
+              <RefreshCw size={20} className={isSyncing ? "animate-spin" : ""} />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Última Sincronización</span>
+                <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-ping'}`} />
+              </div>
+              <p className="text-xs font-bold text-gray-700 mt-1">
+                {farmer?.lastSyncAt 
+                  ? new Date(farmer.lastSyncAt).toLocaleString('es-CO', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
+                  : 'Sin sincronización reciente'
+                }
+              </p>
+            </div>
+          </div>
+          
+          {pendingSyncCount > 0 ? (
+            <div className="px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200/50 flex items-center gap-1.5 animate-pulse shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              <span className="text-[9px] font-black uppercase text-amber-700 tracking-wider">
+                {pendingSyncCount} pendientes
+              </span>
+            </div>
+          ) : (
+            <div className="px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/50 flex items-center gap-1.5 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[9px] font-black uppercase text-emerald-700 tracking-wider">
+                Al día
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Premium Action Modal for Alert Management */}
