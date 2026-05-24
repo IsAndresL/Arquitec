@@ -2,7 +2,7 @@
   "name": "Campesino Smart Farming",
   "short_name": "Campesino SF",
   "description": "Aplicación de gestión agrícola offline-first para productores",
-  "start_url": "/?role=farmer",
+  "start_url": "/farmer",
   "display": "standalone",
   "background_color": "#16a34a",
   "theme_color": "#16a34a",

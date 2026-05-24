@@ -2,7 +2,7 @@
   "name": "Técnico Smart Farming",
   "short_name": "Técnico SF",
   "description": "Aplicación de gestión agrícola offline-first para técnicos",
-  "start_url": "/?role=technician",
+  "start_url": "/technician",
   "display": "standalone",
   "background_color": "#1e3a8a",
   "theme_color": "#1e3a8a",

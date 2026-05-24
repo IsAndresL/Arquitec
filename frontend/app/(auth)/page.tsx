@@ -23,10 +23,12 @@ import {
 import { COLORS } from "@/lib/design-system";
 import { ApiError } from "@/lib/api";
 
-export default function LoginPage() {
+export default function LoginPage({ defaultRole }: { defaultRole?: "farmer" | "technician" }) {
   const router = useRouter();
   const { user, loginTechnician, loginFarmer, logout } = useAuth();
-  const [mode, setMode] = useState<"selection" | "technician" | "farmer">("selection");
+  const [mode, setMode] = useState<"selection" | "technician" | "farmer">(
+    defaultRole || "selection"
+  );
   
   // Technician State
   const [email, setEmail] = useState("");
@@ -75,22 +77,27 @@ export default function LoginPage() {
     : [];
 
   useEffect(() => {
+    let activeRole = defaultRole;
+
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const roleParam = params.get("role");
-      
-      if (roleParam === "farmer") {
-        setMode("farmer");
-        if (user && user.type !== "farmer") {
-          logout();
-          return;
-        }
-      } else if (roleParam === "technician") {
-        setMode("technician");
-        if (user && user.type !== "technician") {
-          logout();
-          return;
-        }
+      const roleParam = params.get("role") as "farmer" | "technician" | null;
+      if (roleParam) {
+        activeRole = roleParam;
+      }
+    }
+    
+    if (activeRole === "farmer") {
+      setMode("farmer");
+      if (user && user.type !== "farmer") {
+        logout();
+        return;
+      }
+    } else if (activeRole === "technician") {
+      setMode("technician");
+      if (user && user.type !== "technician") {
+        logout();
+        return;
       }
     }
 
@@ -102,7 +109,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     }
-  }, [user, router, logout]);
+  }, [user, router, logout, defaultRole]);
 
   const handleTechnicianLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
