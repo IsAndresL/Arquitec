@@ -24,6 +24,11 @@ export const metadata: Metadata = {
   title: "Magdalena Smart Farming",
   description: "Aplicación de gestión agrícola offline-first",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/Smart_Farming_Logo.png",
+    shortcut: "/Smart_Farming_Logo.png",
+    apple: "/Smart_Farming_Logo.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -50,8 +55,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${dmSans.variable} h-full antialiased`}
     >
       <head>
+        <link rel="icon" href="/Smart_Farming_Logo.png" type="image/png" />
+        <link rel="shortcut icon" href="/Smart_Farming_Logo.png" type="image/png" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/Smart_Farming_Logo.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Magdalena SF" />
