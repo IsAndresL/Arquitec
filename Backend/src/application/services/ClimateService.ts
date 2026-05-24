@@ -27,6 +27,57 @@ export class ClimateService {
       },
     })
 
+    // ========================================================================
+    // MOTOR DE INTELIGENCIA AGRÓNOMA (IA): ANÁLISIS DE CLIMA HISTÓRICO Y ALERTAS
+    // ========================================================================
+    if (data.type === 'LLUVIA') {
+      // Si llueve, resolver de forma automática cualquier alerta activa de RIEGO
+      await prisma.alert.updateMany({
+        where: {
+          farmerId: data.farmerId,
+          type: 'RIEGO',
+          isActive: true
+        },
+        data: {
+          isActive: false
+        }
+      });
+    } else {
+      // Si no es lluvia (SOL, NUBLADO, VIENTO), revisar si lleva varios días sin lluvia
+      // Recuperar los últimos 3 registros climáticos ordenados por fecha
+      const recentRecords = await prisma.climateRecord.findMany({
+        where: { farmerId: data.farmerId },
+        orderBy: { date: 'desc' },
+        take: 3
+      });
+
+      // Si ha registrado al menos 3 días consecutivos y ninguno es de lluvia
+      if (recentRecords.length >= 3 && recentRecords.every(r => r.type !== 'LLUVIA')) {
+        // Verificar si ya existe una alerta activa de riego para evitar duplicados
+        const existingRiegoAlert = await prisma.alert.findFirst({
+          where: {
+            farmerId: data.farmerId,
+            type: 'RIEGO',
+            isActive: true
+          }
+        });
+
+        if (!existingRiegoAlert) {
+          await prisma.alert.create({
+            data: {
+              type: 'RIEGO',
+              description: 'Se han registrado 3 días consecutivos sin lluvias en tu vereda. Riega tus parcelas para mantener el cultivo hidratado.',
+              frequency: 'DIARIA',
+              hour: '07:00',
+              isActive: true,
+              farmerId: data.farmerId,
+              syncStatus: 'SINCRONIZADO'
+            }
+          });
+        }
+      }
+    }
+
     return record
   }
 
