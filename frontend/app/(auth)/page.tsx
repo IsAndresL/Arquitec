@@ -17,7 +17,8 @@ import {
   ChevronRight, 
   Package, 
   Delete,
-  AlertCircle
+  AlertCircle,
+  Smartphone
 } from "lucide-react";
 import { COLORS } from "@/lib/design-system";
 import { ApiError } from "@/lib/api";
@@ -235,6 +236,19 @@ export default function LoginPage() {
                 </div>
               </div>
               <ChevronRight size={28} color={COLORS.blue.primary} />
+            </button>
+
+            <button onClick={() => router.push('/install')} className="w-full p-4 rounded-2xl transition-all hover:scale-[1.02] flex items-center justify-between border-2 border-dashed border-white/30 hover:border-white/50 active:scale-[0.98]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)' }}>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/10">
+                  <Smartphone size={24} color={COLORS.white} strokeWidth={2.5} />
+                </div>
+                <div className="text-left">
+                  <p className="text-base" style={{ color: COLORS.white, fontWeight: 750 }}>Instalar App (PWA / APK)</p>
+                  <p className="text-xs" style={{ color: COLORS.green.pale, fontWeight: 600 }}>Descargar en el celular</p>
+                </div>
+              </div>
+              <ChevronRight size={24} color={COLORS.white} />
             </button>
           </div>
         </div>
