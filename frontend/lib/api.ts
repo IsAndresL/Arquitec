@@ -1,4 +1,5 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+const API_BASE_URL = rawApiUrl.replace(/\/+$/, "");
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
