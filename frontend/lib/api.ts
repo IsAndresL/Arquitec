@@ -1,5 +1,10 @@
 const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
-const API_BASE_URL = rawApiUrl.replace(/\/+$/, "");
+let API_BASE_URL = rawApiUrl.replace(/\/+$/, "");
+
+// Garantizar que si apunta a Render, tenga el subpath /api para evitar 404 o redirecciones CORS
+if (API_BASE_URL.includes("onrender.com") && !API_BASE_URL.endsWith("/api")) {
+  API_BASE_URL = `${API_BASE_URL}/api`;
+}
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
