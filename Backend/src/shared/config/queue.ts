@@ -1,13 +1,27 @@
 import { Queue, Worker, Job } from 'bullmq'
-import { redis } from './redis'
+import Redis from 'ioredis'
 import { syncService } from '@/application/services/SyncService'
+
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
+
+// Conexión dedicada para la cola (con maxRetriesPerRequest: null requerido por BullMQ)
+const queueConnection = new Redis(redisUrl, {
+  maxRetriesPerRequest: null,
+  retryStrategy: (times) => Math.min(times * 50, 2000),
+})
+
+// Conexión dedicada para el worker (con maxRetriesPerRequest: null requerido por BullMQ)
+const workerConnection = new Redis(redisUrl, {
+  maxRetriesPerRequest: null,
+  retryStrategy: (times) => Math.min(times * 50, 2000),
+})
 
 // Nombre de la cola
 export const SYNC_QUEUE_NAME = 'sync-queue'
 
 // Crear la cola
 export const syncQueue = new Queue(SYNC_QUEUE_NAME, {
-  connection: redis,
+  connection: queueConnection,
   defaultJobOptions: {
     attempts: 3,
     backoff: {
@@ -43,7 +57,7 @@ export function createSyncWorker() {
       return result
     },
     {
-      connection: redis,
+      connection: workerConnection,
       concurrency: 5, // Procesar hasta 5 jobs simultáneamente
     }
   )
