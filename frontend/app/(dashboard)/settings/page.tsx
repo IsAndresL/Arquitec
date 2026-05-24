@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Info,
   X,
-  Edit2
+  Edit2,
+  ArrowLeft
 } from "lucide-react";
 import { COLORS } from "@/lib/design-system";
 import { api } from "@/lib/api";
@@ -75,10 +76,24 @@ export default function SettingsPage() {
     <div className="h-full relative overflow-y-auto bg-white" style={{ backgroundColor: COLORS.gray.pale }}>
       {/* Header */}
       <div className="p-8 pb-12 rounded-b-[40px]" style={{ backgroundColor: isTechnician ? COLORS.blue.primary : COLORS.green.primary }}>
-        <div className="flex flex-col items-center text-center relative">
+        <div className="flex flex-col items-center text-center relative w-full">
+          <button 
+            onClick={() => {
+              if (isTechnician) {
+                router.push("/admin");
+              } else {
+                router.push("/dashboard");
+              }
+            }}
+            className="absolute left-0 top-0 p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-all flex items-center justify-center active:scale-95 cursor-pointer"
+            title="Volver"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          
           <button 
             onClick={() => setIsEditModalOpen(true)}
-            className="absolute right-0 top-0 p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors"
+            className="absolute right-0 top-0 p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-all cursor-pointer"
           >
             <Edit2 size={20} />
           </button>

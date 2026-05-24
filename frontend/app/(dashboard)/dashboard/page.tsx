@@ -209,7 +209,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Main compact body with soft background and grouped elements */}
-      <div className="p-6 flex-1 flex flex-col justify-between gap-6 overflow-hidden" style={{ backgroundColor: COLORS.gray.pale }}>
+      <div className="p-6 flex-1 flex flex-col gap-6 overflow-y-auto min-h-0" style={{ backgroundColor: COLORS.gray.pale }}>
         {/* Alerts section */}
         {activeAlerts.length > 0 ? (
           <div className="space-y-4 w-full flex-shrink-0">
